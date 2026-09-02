@@ -1,0 +1,49 @@
+services:
+  app:
+    build: .
+    container_name: app
+    env_file:
+      - .env
+    environment:
+      CONN_STRING: ${CONN_STRING}
+      DB_HOST: db
+      REDIS_HOST: redis
+    ports:
+      - "9111:9111"
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  db:
+    image: postgres:18
+    container_name: db
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  redis_data:
