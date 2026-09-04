@@ -1,12 +1,26 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"smarttrain/internal/database"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	ctx := context.Context(context.Background())
+	db, err := database.NewDB(ctx)
+	if err != nil {
+		slog.Error("Get	next error when connect to database:", err)
+		return
+	}
 
 	r := gin.Default()
 
@@ -14,7 +28,33 @@ func main() {
 		c.String(200, "HELLO FROM GIN")
 	})
 
-	r.Run(":9111")
-	fmt.Println("Программа завершена")
+	server := http.Server{
+		Addr:    ":9111",
+		Handler: r,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error(err.Error())
+			return
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	context, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(context); err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	if err := db.Close(); err != nil {
+		slog.Error(err.Error())
+		return
+	}
 
 }
