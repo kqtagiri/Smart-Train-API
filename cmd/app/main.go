@@ -7,6 +7,9 @@ import (
 	"os"
 	"os/signal"
 	"smarttrain/internal/database"
+	"smarttrain/internal/handler"
+	"smarttrain/internal/repository"
+	"smarttrain/internal/service"
 	"syscall"
 	"time"
 
@@ -22,11 +25,18 @@ func main() {
 		return
 	}
 
+	userRepo := repository.NewUserRepo(db)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
+
 	r := gin.Default()
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "HELLO FROM GIN")
 	})
+
+	users := r.Group("/users")
+	users.GET("/all", userHandler.AllUsersInfo)
 
 	server := http.Server{
 		Addr:    ":9111",
