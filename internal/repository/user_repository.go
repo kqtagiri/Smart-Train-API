@@ -11,6 +11,7 @@ import (
 
 type UserRepository interface {
 	AllUsersInfo(ctx context.Context) (*[]domain.User, error)
+	UserInfo(ctx context.Context, login string) (*domain.User, error)
 }
 
 type userRepo struct {
@@ -81,5 +82,26 @@ func (r *userRepo) AllUsersInfo(ctx context.Context) (*[]domain.User, error) {
 
 	slog.Info("Repository ended \"AllUsersInfo\" success")
 	return &users, nil
+
+}
+
+func (r *userRepo) UserInfo(ctx context.Context, login string) (*domain.User, error) {
+
+	slog.Info("Repository started \"UserInfo\"")
+
+	query := `SELECT * FROM users WHERE login = $1;`
+	var model UserModel
+	if err := r.db.Pool.QueryRow(ctx, query, login).Scan(&model.Id, &model.FirstName, &model.LastName, &model.Login, &model.Password, &model.Balance); err != nil {
+		slog.Error("Repository \"UserInfo\" get next error:", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	user := ConvertModelToUser(&model)
+
+	slog.Info("Repository ended \"UserInfo\" success")
+	return &user, nil
 
 }

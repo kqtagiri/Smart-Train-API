@@ -31,12 +31,13 @@ func main() {
 
 	r := gin.Default()
 
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET("/api/v1/ping", func(c *gin.Context) {
 		c.String(200, "HELLO FROM GIN")
 	})
 
-	users := r.Group("/users")
+	users := r.Group("/api/v1/users")
 	users.GET("/all", userHandler.AllUsersInfo)
+	users.GET("/:login", userHandler.UserInfo)
 
 	server := http.Server{
 		Addr:    ":9111",
