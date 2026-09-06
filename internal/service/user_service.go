@@ -46,3 +46,22 @@ func (s *userService) UserInfo(ctx context.Context, login string) (*domain.User,
 	return user, nil
 
 }
+
+func (s *userService) RegisterAccount(ctx context.Context, firstName, lastName, login, password string) (*domain.User, error) {
+
+	slog.Info("Service started \"RegisterAccount\"")
+
+	user, err := domain.NewUser(firstName, lastName, login, password)
+	if err != nil {
+		slog.Error("Service \"RegisterAccount\" get next error when create new user:", err)
+		return nil, err
+	}
+
+	if err := s.repo.RegisterAccount(ctx, user); err != nil {
+		return nil, err
+	}
+
+	slog.Info("Service ended \"RegisterAccount\" success")
+	return user, nil
+
+}

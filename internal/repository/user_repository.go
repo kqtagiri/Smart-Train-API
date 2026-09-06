@@ -12,6 +12,7 @@ import (
 type UserRepository interface {
 	AllUsersInfo(ctx context.Context) (*[]domain.User, error)
 	UserInfo(ctx context.Context, login string) (*domain.User, error)
+	RegisterAccount(ctx context.Context, u *domain.User) error
 }
 
 type userRepo struct {
@@ -103,5 +104,27 @@ func (r *userRepo) UserInfo(ctx context.Context, login string) (*domain.User, er
 
 	slog.Info("Repository ended \"UserInfo\" success")
 	return &user, nil
+
+}
+
+func (r *userRepo) RegisterAccount(ctx context.Context, u *domain.User) error {
+
+	slog.Info("Repository started \"RegisterAccount\"")
+
+	query := `INSERT INTO users (first_name, last_name, login, password, balance) VALUES ($1,$2,$3,$4,$5);`
+	result, err := r.db.Pool.Exec(ctx, query, u.FirstName, u.LastName, u.Login, u.Password, u.Balance)
+	if err != nil {
+		slog.Error("Repository \"RegisterAccount\" get next error:", err)
+		return err
+	}
+
+	affected := result.RowsAffected()
+	if affected != 1 {
+		slog.Error("Repository \"RegisterAccount\" get next error:", domain.ErrWithInsert)
+		return domain.ErrWithInsert
+	}
+
+	slog.Info("Repository ended \"RegisterAccount\" success")
+	return nil
 
 }

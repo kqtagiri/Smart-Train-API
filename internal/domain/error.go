@@ -15,5 +15,6 @@ var (
 	ErrInvalidPassword  = errors.New("Invalid password")
 
 	ErrUserNotFound     = errors.New("User not found")
+	ErrWithInsert       = errors.New("Error with insert")
 	ErrInvalidReplenish = errors.New("Invalid replenish")
 )

@@ -38,6 +38,7 @@ func main() {
 	users := r.Group("/api/v1/users")
 	users.GET("/all", userHandler.AllUsersInfo)
 	users.GET("/:login", userHandler.UserInfo)
+	users.POST("/register", userHandler.RegisterAccount)
 
 	server := http.Server{
 		Addr:    ":9111",
